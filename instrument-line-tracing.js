@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 
-esprima = require('esprima')
-escodegen = require('escodegen')
+// Copyright (C) 2015 by Yuri Victorovich. All rights reserved.
+
+const esprima = require('esprima')
+const escodegen = require('escodegen')
 const stripShebang = require('strip-shebang');
-fs = require("fs");
+const fs = require("fs");
 
 var traceTextLine    = '__lineTracer__();';
 var traceStmtRequire = esprima.parse('__lineTracer__ = require(\'__lineTracer__\')')
@@ -315,14 +317,14 @@ function insertLocations(file, str) {
   return res;
 }
 
-function instrFile(fname, wr) {
+function instrumentFile(fname, cbSucceeded, cbParseFailed) {
   var strOrig = fs.readFileSync(fname, "utf8")
   var strPure = stripShebang(strOrig)
   var parsed;
   try {
     parsed = esprima.parse(strPure)
   } catch(err) {
-    console.log("ERROR: failed to parse file "+fname)
+    cbParseFailed(fname, err)
     return
   }
   //
@@ -333,55 +335,52 @@ function instrFile(fname, wr) {
   // replace with line numbers
   instrumented = insertLocations(fname, instrumented)
   // output
-  if (wr) {
-    fs.writeFile(fname, instrumented, function (err) {
-      if (err) throw err;
-      //console.log('file '+fname+' is instrumented')
-    })
-  } else {
-    console.log('=====>\n'+instrumented+'\n<=====');
-  }
+  fs.writeFile(fname, instrumented, function (err) {
+    if (err) throw err;
+  })
+  cbSucceeded(fname);
 }
 
-function instrFileList(fname) {
-  var str = fs.readFileSync(fname, "utf8")
-  var lst = str.split("\n");
-  console.log("lst.size="+lst.length)
-  for (var i = 0; i<lst.length; i++) {
-    if (lst[i]=='') continue
-    console.log('***** processing file >'+lst[i]+"< *****")
-    instrFile(lst[i], false)
-  }
-}
-
-function listJsFiles(dir, lst) {
+function listJsFilesL(dir, lst) {
   fs.readdirSync(dir).forEach(function(file) {
     file = dir+'/'+file
     var stat = fs.statSync(file);
     if (stat && stat.isDirectory()) {
-      listJsFiles(file,lst)
+      listJsFilesL(file,lst)
     } else if (file.endsWith(".js")) {
       lst.push(file)
     }
   })
 }
 
+function listJsFiles(dir) {
+  var files = []
+  listJsFilesL(dir, files)
+  return files
+}
+
 function instumentProject(dir) {
   // instrument js files
-  var files = []
-  listJsFiles(dir, files)
+  var files = listJsFiles(dir);
+  var cntSucc = 0, cntFail = 0;
   for (var i = 0; i < files.length; i++)
-    instrFile(files[i], true) // write
+    instrumentFile(files[i], function(fname) {
+      cntSucc++;
+    }, function(fname, err) {
+      console.error("ERROR: failed to parse js file "+fname+' ('+err.toString()+')')
+      cntFail++;
+    });
   // add __lineTracer__.js
   fs.createReadStream('__lineTracer__.js').pipe(fs.createWriteStream(dir+"/node_modules/__lineTracer__.js"));
+  // report
+  if (cntFail==0) {
+    console.log('instrumented '+cntSucc+' js files');
+  } else {
+    console.log('instrumented '+cntSucc+' js files, failed '+cntFail+' files');
+  }
 }
 
 // for testing
-
-// single file
-//instrFile(process.argv[2], false)
-// file list
-//instrFileList(process.argv[2])
 
 //
 // MAIN: instrument the project directory

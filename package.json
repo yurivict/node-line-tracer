@@ -6,6 +6,7 @@
     "homepage": "http://github.com/yurivict/node-line-tracer",
     "files": [
         "README.md",
+        "LICENSE",
         "instrument-line-tracing.js",
         "__lineTracer__.js",
         "package.json"
