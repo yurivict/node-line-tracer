@@ -1,0 +1,33 @@
+{
+    "name": "node-line-tracer",
+    "version": "0.0.1",
+    "description": "NodeJS code tracer",
+    "main": "instrument-project.js",
+    "homepage": "http://github.com/yurivict/node-line-tracer",
+    "files": [
+        "README.md",
+        "instrument-line-tracing.js",
+        "__lineTracer__.js",
+        "package.json"
+    ],
+    "maintainers": [
+        {
+            "name": "Yuri Victorovich",
+            "email": "yuri@rawbw.com",
+            "web": "http://github.com/yurivict"
+        }
+    ],
+    "repository": {
+        "type": "git",
+        "url": "http://github.com/yurivict/node-line-tracer.git"
+    },
+    "dependencies": {
+        "esprima": "^2.7.0",
+        "escodegen": "^1.7.0",
+        "strip-shebang": "^1.0.0"
+    },
+    "license": "BSD-2-Clause",
+    "engines": {
+        "node": ">=0.10.0"
+    }
+}
