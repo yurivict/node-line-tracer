@@ -133,7 +133,8 @@ function instrumentStmt(stmt) {
     instrumentFuncBody(stmt)
     done = true
   } else if (stmt.type==='ReturnStatement') {
-    // nothing
+    if (stmt.argument)
+      instrumentExpr(stmt.argument);
     done = true
   } else if (stmt.type==='WhileStatement') {
     instrumentExpr(stmt.test)
@@ -252,6 +253,8 @@ function instrumentExpr(expr) {
   } else if (expr.type==='ComprehensionExpression') {
   } else if (expr.type==='ComprehensionBlock') {
   } else if (expr.type==='SpreadElement') {
+    instrumentExpr(expr.argument)
+    done = true;
   } else if (expr.type==='TaggedTemplateExpression') {
   } else if (expr.type==='TemplateElement') {
   } else if (expr.type==='TemplateLiteral') {
@@ -311,7 +314,7 @@ function insertLocations(file, str) {
   for (var i = 0; i < lines.length; i++) {
     var line = lines[i];
     if (line.replace(/ /g,'')==traceTextLine)
-      line = '__lineTracer__(\''+file+'\','+(i+1)+');';
+      line = '                                                __lineTracer__(\''+file+'\','+(i+1)+');'; // added leading space so that sources are still easy to read
     res = res + line + '\n';
   }
   return res;
