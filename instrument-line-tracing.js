@@ -383,8 +383,6 @@ function instumentProject(dir) {
   }
 }
 
-// for testing
-
 //
 // MAIN: instrument the project directory
 //
